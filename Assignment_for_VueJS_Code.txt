@@ -1,0 +1,114 @@
+1)Create a simple web application of To do lists. write a code using java and vue.js
+  Requirement:
+  a. User should be able to add a list with text, number and special characters
+  b. Users should be able to strike through the list time
+  c. User should be able to create folders for the todo lists to be saved in.
+==> 
+ Java code :
+
+@RestController
+public class TodoListController {
+
+    private List<TodoList> todoLists = new ArrayList<>();
+
+    @GetMapping("/api/todolists")
+    public List<TodoList> getTodoLists() {
+        return todoLists;
+    }
+
+    @PostMapping("/api/todolists")
+    public TodoList addTodoList(@RequestBody TodoList todoList) {
+        todoLists.add(todoList);
+        return todoList;
+    }
+
+    @PutMapping("/api/todolists/{id}")
+    public TodoList updateTodoList(@PathVariable Long id, @RequestBody TodoList updatedTodoList) {
+        TodoList todoList = todoLists.stream()
+                .filter(tl -> tl.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Todo List not found: " + id));
+        todoList.setName(updatedTodoList.getName());
+        todoList.setItems(updatedTodoList.getItems());
+        return todoList;
+    }
+
+    @DeleteMapping("/api/todolists/{id}")
+    public void deleteTodoList(@PathVariable Long id) {
+        todoLists.removeIf(tl -> tl.getId().equals(id));
+    }
+}
+
+vue.js code :
+
+<template>
+  <div>
+    <h1>To-Do List</h1>
+    <div>
+      <input type="text" v-model="newTodoListName" placeholder="Enter new list name"/>
+      <button v-on:click="addTodoList">Add List</button>
+    </div>
+    <div v-for="todoList in todoLists" :key="todoList.id">
+      <h2>{{ todoList.name }}</h2>
+      <ul>
+        <li v-for="item in todoList.items" :key="item.id" v-bind:class="{ done: item.done }" v-on:click="toggleDone(todoList, item)">
+          {{ item.text }}
+        </li>
+      </ul>
+      <div>
+        <input type="text" v-model="newItemText" placeholder="Add new item..." />
+        <button v-on:click="addItem(todoList)">Add</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      todoLists: [],
+      newTodoListName: '',
+      newItemText: ''
+    };
+  },
+  mounted() {
+    axios.get('/api/todolists').then(response => {
+      this.todoLists = response.data;
+    });
+  },
+  methods: {
+    addTodoList() {
+      if (this.newTodoListName) {
+        const newTodoList = { name: this.newTodoListName, items: [] };
+        axios.post('/api/todolists', newTodoList).then(response => {
+          this.todoLists.push(response.data);
+          this.newTodoListName = '';
+        });
+      }
+    },
+    addItem(todoList) {
+      if (this.newItemText) {
+        const newItem = { text: this.newItemText, done: false };
+        todoList.items.push(newItem);
+        axios.put('/api/todolists/' + todoList.id, todoList);
+        this.newItemText = '';
+      }
+    },
+    toggleDone(todoList, item) {
+      item.done = !item.done;
+      axios.put('/api/todolists/' + todoList.id, todoList);
+    }
+  }
+};
+</script>
+
+<style>
+.done {
+  text-decoration: line-through;
+}
+</style>
+
+       
