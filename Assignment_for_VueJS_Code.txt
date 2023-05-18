@@ -1,9 +1,4 @@
-1)Create a simple web application of To do lists. write a code using java and vue.js
-  Requirement:
-  a. User should be able to add a list with text, number and special characters
-  b. Users should be able to strike through the list time
-  c. User should be able to create folders for the todo lists to be saved in.
-==> 
+
  Java code :
 
 @RestController
